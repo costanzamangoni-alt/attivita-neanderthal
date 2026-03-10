@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wordwall – I Neanderthal</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --stone: #8B7355;
+    --cave: #4A3728;
+    --fire: #E8640C;
+    --ember: #F5A623;
+    --sky: #6BA3BE;
+    --grass: #6B8F47;
+    --cream: #FDF6E3;
+    --light: #FFF9F0;
+    --dark: #2C1A0E;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--light);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 10% 20%, rgba(139,115,85,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 80%, rgba(232,100,12,0.08) 0%, transparent 50%);
+  }
+
+  /* Texture rocks top */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 8px;
+    background: repeating-linear-gradient(90deg, var(--cave) 0px, var(--stone) 40px, var(--cave) 80px);
+  }
+
+  header {
+    text-align: center;
+    padding: 48px 20px 24px;
+  }
+
+  .subtitle-badge {
+    display: inline-block;
+    background: var(--stone);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 5px 16px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-family: 'Baloo 2', cursive;
+    font-size: clamp(2rem, 6vw, 3.8rem);
+    font-weight: 800;
+    color: var(--cave);
+    line-height: 1.1;
+    text-shadow: 3px 3px 0px rgba(139,115,85,0.3);
+    margin-bottom: 8px;
+  }
+
+  h1 span { color: var(--fire); }
+
+  .header-desc {
+    color: var(--stone);
+    font-size: 1rem;
+    margin-top: 6px;
+  }
+
+  /* WORD WALL GRID */
+  .wordwall-section {
+    max-width: 1000px;
+    margin: 0 auto 48px;
+    padding: 0 20px;
+  }
+
+  .section-title {
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--cave);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 3px;
+    background: repeating-linear-gradient(90deg, var(--stone) 0px, var(--stone) 8px, transparent 8px, transparent 16px);
+  }
+
+  .words-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+  }
+
+  .word-card {
+    background: white;
+    border: 3px solid var(--stone);
+    border-radius: 16px;
+    padding: 18px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 4px 4px 0 rgba(139,115,85,0.3);
+  }
+
+  .word-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, var(--fire), var(--ember));
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .word-card:hover {
+    transform: translateY(-4px) scale(1.04);
+    box-shadow: 6px 8px 0 rgba(139,115,85,0.4);
+    border-color: var(--fire);
+  }
+
+  .word-card:hover::before { opacity: 1; }
+  .word-card:hover .word-text { color: white; }
+  .word-card:hover .word-icon { transform: scale(1.2); }
+
+  .word-card.selected {
+    border-color: var(--fire);
+    background: linear-gradient(135deg, var(--fire), var(--ember));
+    transform: translateY(-4px) scale(1.04);
+    box-shadow: 6px 8px 0 rgba(139,115,85,0.4);
+  }
+  .word-card.selected .word-text { color: white; }
+  .word-card.selected::before { opacity: 1; }
+
+  .word-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.25s;
+  }
+
+  .word-text {
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--cave);
+    position: relative;
+    z-index: 1;
+    transition: color 0.25s;
+  }
+
+  /* DEFINITION PANEL */
+  .definition-panel {
+    max-width: 1000px;
+    margin: 0 auto 48px;
+    padding: 0 20px;
+  }
+
+  .def-box {
+    background: white;
+    border: 3px solid var(--ember);
+    border-radius: 20px;
+    padding: 28px 32px;
+    box-shadow: 6px 6px 0 rgba(232,100,12,0.2);
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.4s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  .def-icon-big {
+    font-size: 3.5rem;
+    flex-shrink: 0;
+  }
+
+  .def-content { flex: 1; }
+
+  .def-word {
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--fire);
+    margin-bottom: 6px;
+  }
+
+  .def-text {
+    font-size: 1.05rem;
+    color: var(--cave);
+    line-height: 1.6;
+  }
+
+  .def-placeholder {
+    color: var(--stone);
+    font-style: italic;
+    font-size: 1rem;
+    margin: auto;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* QUIZ SECTION */
+  .quiz-section {
+    max-width: 1000px;
+    margin: 0 auto 60px;
+    padding: 0 20px;
+  }
+
+  .quiz-card {
+    background: white;
+    border: 3px solid var(--sky);
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 5px 5px 0 rgba(107,163,190,0.3);
+  }
+
+  .quiz-question {
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--cave);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .q-num {
+    background: var(--sky);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .quiz-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .quiz-option {
+    border: 2.5px solid var(--stone);
+    border-radius: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    color: var(--cave);
+    background: var(--cream);
+    transition: all 0.2s;
+    text-align: left;
+  }
+
+  .quiz-option:hover:not(.answered) {
+    border-color: var(--sky);
+    background: #EAF4FA;
+    transform: translateX(4px);
+  }
+
+  .quiz-option.correct {
+    border-color: var(--grass);
+    background: #EAF4E0;
+    color: #3A5A1E;
+  }
+
+  .quiz-option.wrong {
+    border-color: #D94F3D;
+    background: #FDE8E6;
+    color: #8B2318;
+  }
+
+  .quiz-feedback {
+    margin-top: 14px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: none;
+  }
+
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.ok { background: #EAF4E0; color: #3A5A1E; border-left: 4px solid var(--grass); }
+  .quiz-feedback.ko { background: #FDE8E6; color: #8B2318; border-left: 4px solid #D94F3D; }
+
+  /* SCORE */
+  .score-bar {
+    max-width: 1000px;
+    margin: 0 auto 30px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .score-label {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 700;
+    color: var(--cave);
+    white-space: nowrap;
+    font-size: 1.1rem;
+  }
+
+  .score-track {
+    flex: 1;
+    height: 16px;
+    background: #E8DDD0;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .score-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--fire), var(--ember));
+    border-radius: 10px;
+    transition: width 0.6s cubic-bezier(.34,1.56,.64,1);
+    width: 0%;
+  }
+
+  .score-num {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    color: var(--fire);
+    font-size: 1.2rem;
+    white-space: nowrap;
+  }
+
+  /* RESET BUTTON */
+  .reset-btn {
+    display: block;
+    margin: 0 auto 60px;
+    padding: 14px 36px;
+    background: var(--cave);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 4px 4px 0 rgba(44,26,14,0.3);
+  }
+
+  .reset-btn:hover {
+    background: var(--fire);
+    transform: translateY(-3px);
+    box-shadow: 4px 7px 0 rgba(44,26,14,0.3);
+  }
+
+  @media (max-width: 600px) {
+    .quiz-options { grid-template-columns: 1fr; }
+    .def-box { flex-direction: column; text-align: center; }
+    .words-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="subtitle-badge">📚 Storia · Classe 3ª</div>
+  <h1>🦴 I <span>Neanderthal</span></h1>
+  <p class="header-desc">Clicca sulle parole per scoprire il significato, poi mettiti alla prova!</p>
+</header>
+
+<!-- WORD WALL -->
+<div class="wordwall-section">
+  <div class="section-title">🪨 Parole chiave</div>
+  <div class="words-grid" id="wordGrid"></div>
+</div>
+
+<!-- DEFINITION PANEL -->
+<div class="definition-panel">
+  <div class="def-box" id="defBox">
+    <p class="def-placeholder">👆 Clicca su una parola per leggere la sua definizione!</p>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="quiz-section">
+  <div class="section-title">🎯 Mettiti alla prova!</div>
+  <div id="quizContainer"></div>
+</div>
+
+<!-- SCORE BAR -->
+<div class="score-bar">
+  <span class="score-label">Punteggio:</span>
+  <div class="score-track"><div class="score-fill" id="scoreFill"></div></div>
+  <span class="score-num" id="scoreNum">0 / 0</span>
+</div>
+
+<button class="reset-btn" onclick="resetQuiz()">🔄 Ricomincia il quiz</button>
+
+<script>
+const words = [
+  { word: "Neanderthal", icon: "🦴", def: "Una specie di ominini (antenati dell'uomo) che visse in Europa e Medio Oriente tra 300.000 e 40.000 anni fa. Non era di origine africana come l'uomo moderno." },
+  { word: "Fossile", icon: "🪨", def: "Il resto pietrificato di un essere vivente antico ritrovato nella roccia. I fossili dei Neanderthal ci hanno aiutato a capire com'erano questi ominini." },
+  { word: "Onnivoro", icon: "🍖", def: "Chi mangia ogni tipo di cibo: carne, frutta, verdura e vegetali. I Neanderthal erano onnivori: mangiavano di tutto!" },
+  { word: "Caccia", icon: "🏹", def: "L'attività di catturare animali per mangiare. Da soli i Neanderthal cacciavano animali piccoli; in gruppo si organizzavano per cacciare animali molto più grandi." },
+  { word: "Rito funebre", icon: "⚰️", def: "La cerimonia che si celebra quando una persona muore. I Neanderthal furono probabilmente i primi a seppellire i morti con dei riti speciali." },
+  { word: "Paleolitico Medio", icon: "🗿", def: "Il periodo della preistoria in cui vissero i Neanderthal, tra circa 300.000 e 40.000 anni fa. 'Paleo' significa antico, 'lithos' significa pietra." },
+  { word: "Grande cervello", icon: "🧠", def: "I Neanderthal avevano un cervello molto grande, simile al nostro. Questo li rendeva intelligenti: costruivano strumenti, usavano il fuoco e comunicavano tra loro." },
+  { word: "Arcata sopraccigliare", icon: "👁️", def: "La parte sporgente dell'osso che sta sopra gli occhi. I Neanderthal avevano un'arcata sopraccigliare molto prominente, diversa da quella dell'uomo moderno." },
+  { word: "Linguaggio", icon: "💬", def: "Il modo di comunicare usando parole o suoni. Si pensa che i Neanderthal usassero una forma di linguaggio complessa per parlare tra di loro." },
+  { word: "Medicina", icon: "🌿", def: "I Neanderthal raccoglievano piante che usavano per curare i malati. Erano quindi tra i primissimi 'medici' della storia!" },
+  { word: "Europa", icon: "🗺️", def: "Il continente dove si sviluppò la specie Neanderthal. A differenza degli altri ominini, i Neanderthal ebbero origine in Europa e non in Africa." },
+];
+
+const quizData = [
+  {
+    q: "Dove vissero principalmente i Neanderthal?",
+    opts: ["In Africa e America", "In Europa e Medio Oriente", "In Asia e Oceania", "Solo in Germania"],
+    correct: 1,
+    feedback: "Giusto! I Neanderthal vivevano in Europa e Medio Oriente. Erano l'unica specie di ominini a non provenire dall'Africa! 🌍"
+  },
+  {
+    q: "Cosa mangiavano i Neanderthal?",
+    opts: ["Solo carne", "Solo frutta e verdura", "Carne, frutta, tuberi e vegetali", "Solo pesce"],
+    correct: 2,
+    feedback: "Esatto! Erano onnivori: mangiavano carne, frutta, tuberi e vegetali. Raccoglievano anche piante medicinali! 🥩🍎"
+  },
+
+  {
+    q: "Cosa sono i riti funebri?",
+    opts: ["Danze di festa", "Cerimonie legate alla morte", "Giochi per bambini", "Modi di cacciare"],
+    correct: 1,
+    feedback: "Perfetto! Il rito funebre è la cerimonia celebrata quando qualcuno muore. I Neanderthal furono tra i primi a seppellire i morti! ⚰️"
+  },
+  {
+    q: "Cosa vuol dire 'onnivoro'?",
+    opts: ["Che mangia solo carne", "Che mangia solo piante", "Che mangia ogni tipo di cibo", "Che non mangia nulla"],
+    correct: 2,
+    feedback: "Corretto! Onnivoro significa che si mangia di tutto: carne, frutta, vegetali... come fanno anche molti di noi! 😄"
+  },
+  {
+    q: "In quale periodo preistorico vissero i Neanderthal?",
+    opts: ["Paleolitico Superiore", "Neolitico", "Paleolitico Medio", "Età del Bronzo"],
+    correct: 2,
+    feedback: "Giusto! Il Paleolitico Medio è il periodo tra 300.000 e 40.000 anni fa. 'Paleo' = antico, 'lithos' = pietra! 🗿"
+  },
+  {
+    q: "Quando furono ritrovate le prime ossa di Neanderthal, si pensava appartenessero a soldati deformi. Quali erano le caratteristiche fisiche così strane?",
+    opts: ["Erano altissimi e con le braccia lunghe", "Avevano ossa corte e robuste, un'arcata sopraccigliare prominente e un naso grande", "Avevano la testa molto piccola e i denti grandi", "Camminavano a quattro zampe e avevano la coda"],
+    correct: 1,
+    feedback: "Esatto! Le loro ossa erano corte e robuste, avevano un'arcata sopraccigliare molto sporgente e un naso grande. Queste caratteristiche li aiutavano a sopravvivere al freddo! 🦴"
+  },
+  {
+    q: "Com'era l'aspetto fisico dei Neanderthal?",
+    opts: ["Pelle scura e capelli neri", "Pelle chiara e, alcuni di loro, capelli rossi", "Pelle verde e capelli bianchi", "Erano ricoperti di pelo come le scimmie"],
+    correct: 1,
+    feedback: "Giusto! I Neanderthal avevano la pelle chiara e alcuni di loro avevano addirittura i capelli rossi. Un aspetto molto diverso da quello che molti immaginano! 🧡"
+  },
+];
+
+let score = 0;
+let answered = 0;
+let selectedWord = null;
+
+// Build word grid
+const grid = document.getElementById('wordGrid');
+words.forEach((w, i) => {
+  const card = document.createElement('div');
+  card.className = 'word-card';
+  card.innerHTML = `<span class="word-icon">${w.icon}</span><span class="word-text">${w.word}</span>`;
+  card.addEventListener('click', () => selectWord(i, card));
+  grid.appendChild(card);
+});
+
+function selectWord(idx, card) {
+  document.querySelectorAll('.word-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  const w = words[idx];
+  const box = document.getElementById('defBox');
+  box.innerHTML = `
+    <div class="def-icon-big">${w.icon}</div>
+    <div class="def-content">
+      <div class="def-word">${w.word}</div>
+      <div class="def-text">${w.def}</div>
+    </div>
+  `;
+  box.style.transform = 'scale(1.01)';
+  setTimeout(() => box.style.transform = '', 300);
+}
+
+// Build quiz
+const quizContainer = document.getElementById('quizContainer');
+quizData.forEach((q, qi) => {
+  const card = document.createElement('div');
+  card.className = 'quiz-card';
+  const optHTML = q.opts.map((o, oi) => `
+    <button class="quiz-option" data-q="${qi}" data-o="${oi}" onclick="answer(this, ${qi}, ${oi}, ${q.correct})">
+      ${['🅐','🅑','🅒','🅓'][oi]} ${o}
+    </button>
+  `).join('');
+  card.innerHTML = `
+    <div class="quiz-question">
+      <span class="q-num">${qi+1}</span>
+      <span>${q.q}</span>
+    </div>
+    <div class="quiz-options">${optHTML}</div>
+    <div class="quiz-feedback" id="fb${qi}"></div>
+  `;
+  quizContainer.appendChild(card);
+});
+
+function answer(btn, qi, oi, correct) {
+  const allOpts = document.querySelectorAll(`[data-q="${qi}"]`);
+  if (btn.classList.contains('answered') || btn.classList.contains('correct') || btn.classList.contains('wrong')) return;
+  allOpts.forEach(b => b.classList.add('answered'));
+  allOpts[correct].classList.add('correct');
+  const fb = document.getElementById(`fb${qi}`);
+  if (oi === correct) {
+    score++;
+    fb.className = 'quiz-feedback show ok';
+    fb.textContent = '✅ ' + quizData[qi].feedback;
+  } else {
+    btn.classList.add('wrong');
+    fb.className = 'quiz-feedback show ko';
+    fb.textContent = '❌ Non è esatto. ' + quizData[qi].feedback;
+  }
+  answered++;
+  updateScore();
+}
+
+function updateScore() {
+  const total = quizData.length;
+  const pct = (score / total) * 100;
+  document.getElementById('scoreFill').style.width = pct + '%';
+  document.getElementById('scoreNum').textContent = `${score} / ${answered}`;
+}
+
+function resetQuiz() {
+  score = 0; answered = 0;
+  document.querySelectorAll('.quiz-option').forEach(b => {
+    b.classList.remove('correct','wrong','answered');
+  });
+  document.querySelectorAll('.quiz-feedback').forEach(f => {
+    f.className = 'quiz-feedback';
+    f.textContent = '';
+  });
+  updateScore();
+}
+</script>
+</body>
+</html>

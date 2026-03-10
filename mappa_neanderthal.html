@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mappa – I Neanderthal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #1C1008;
+  --center-bg: #E8640C;
+  --center-glow: #F5A623;
+  --node1: #5C8A30;   /* DOVE - verde */
+  --node2: #4A90BE;   /* ASPETTO - blu */
+  --node3: #8B5E3A;   /* CIBO - terra */
+  --node4: #9B59B6;   /* ABILITÀ - viola */
+  --node5: #C0392B;   /* FINE - rosso */
+  --node6: #2E86AB;   /* PERIODO - petrolio */
+  --text-light: #FFFDF5;
+  --text-dark: #2C1A0E;
+  --leaf-bg: rgba(255,255,255,0.10);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+/* HEADER */
+header {
+  width: 100%;
+  text-align: center;
+  padding: 28px 20px 10px;
+}
+.badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.6);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 5px 16px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+h1 {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  color: var(--center-glow);
+  margin-bottom: 4px;
+  text-shadow: 0 0 30px rgba(245,166,35,0.4);
+}
+.sub {
+  color: rgba(255,255,255,0.45);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* MAP WRAPPER */
+.map-wrap {
+  position: relative;
+  width: min(900px, 96vw);
+  margin: 30px auto 0;
+}
+
+/* SVG LINES */
+.map-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+.connector {
+  stroke-width: 3;
+  stroke-dasharray: 8 5;
+  fill: none;
+  opacity: 0.45;
+  stroke-linecap: round;
+}
+
+/* GRID LAYOUT */
+.map-grid {
+  display: grid;
+  grid-template-columns: 1fr 200px 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 16px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  padding: 10px;
+}
+
+/* CENTER NODE */
+.center-node {
+  grid-column: 2;
+  grid-row: 2;
+  background: linear-gradient(135deg, var(--center-bg), var(--center-glow));
+  border-radius: 50%;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 0 0 6px rgba(245,166,35,0.25), 0 0 40px rgba(232,100,12,0.5);
+  z-index: 2;
+  animation: pulse-center 3s ease-in-out infinite;
+  margin: 0 auto;
+}
+@keyframes pulse-center {
+  0%,100% { box-shadow: 0 0 0 6px rgba(245,166,35,0.25), 0 0 40px rgba(232,100,12,0.5); }
+  50%      { box-shadow: 0 0 0 12px rgba(245,166,35,0.15), 0 0 60px rgba(232,100,12,0.7); }
+}
+.center-icon { font-size: 2.6rem; margin-bottom: 4px; }
+.center-label {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.2rem;
+  color: white;
+  line-height: 1.15;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* BRANCH NODES */
+.branch {
+  border-radius: 18px;
+  padding: 16px 14px;
+  cursor: pointer;
+  transition: all 0.28s cubic-bezier(.34,1.56,.64,1);
+  text-align: center;
+  position: relative;
+  border: 2.5px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(4px);
+}
+.branch:hover { transform: scale(1.06) translateY(-3px); border-color: rgba(255,255,255,0.35); }
+.branch.open  { transform: scale(1.04); border-color: rgba(255,255,255,0.5); }
+
+.branch-icon  { font-size: 1.8rem; margin-bottom: 6px; display: block; }
+.branch-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1rem;
+  color: white;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+.branch-preview {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.4;
+}
+
+/* position helpers */
+.col-left  { grid-column: 1; }
+.col-right { grid-column: 3; }
+.row-top   { grid-row: 1; }
+.row-mid   { grid-row: 2; }
+.row-bot   { grid-row: 3; }
+
+/* per-branch colors */
+.b-dove    { background: linear-gradient(135deg, #3a6b1a, #5C8A30); }
+.b-aspetto { background: linear-gradient(135deg, #1a5a8a, #4A90BE); }
+.b-cibo    { background: linear-gradient(135deg, #6b3a1a, #8B5E3A); }
+.b-abilita { background: linear-gradient(135deg, #6b2a9b, #9B59B6); }
+.b-fine    { background: linear-gradient(135deg, #8b1a1a, #C0392B); }
+.b-periodo { background: linear-gradient(135deg, #1a4a6b, #2E86AB); }
+
+/* DETAIL PANEL */
+.detail-panel {
+  width: min(900px, 96vw);
+  margin: 20px auto 40px;
+  border-radius: 22px;
+  padding: 28px 32px;
+  border: 2.5px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(8px);
+  display: none;
+  animation: fadeUp 0.35s ease;
+}
+.detail-panel.visible { display: block; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.detail-icon-big { font-size: 2.8rem; }
+.detail-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.6rem;
+  color: white;
+}
+.detail-color-bar {
+  height: 4px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  opacity: 0.7;
+}
+.detail-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.detail-item {
+  background: rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 14px 16px;
+  border-left: 4px solid rgba(255,255,255,0.2);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.di-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+.di-text { font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.88); line-height: 1.5; }
+.di-text strong { color: white; display: block; margin-bottom: 2px; font-size: 0.95rem; }
+
+/* close btn */
+.close-detail {
+  display: block;
+  margin: 20px auto 0;
+  font-family: 'Fredoka One', cursive;
+  font-size: 0.9rem;
+  padding: 8px 22px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 50px;
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.close-detail:hover { border-color: rgba(255,255,255,0.5); color: white; }
+
+/* HINT */
+.hint {
+  color: rgba(255,255,255,0.3);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 8px 0 0;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 600px) {
+  .map-grid { grid-template-columns: 1fr 120px 1fr; gap: 10px; }
+  .center-node { width: 110px; height: 110px; }
+  .center-icon { font-size: 1.8rem; }
+  .center-label { font-size: 0.9rem; }
+  .branch { padding: 10px 8px; }
+  .branch-icon { font-size: 1.3rem; }
+  .branch-title { font-size: 0.8rem; }
+  .branch-preview { display: none; }
+  .detail-items { grid-template-columns: 1fr; }
+  .detail-panel { padding: 20px 16px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">📚 Storia · Classe 3ª · Mappa concettuale</div>
+  <h1>🦴 I Neanderthal</h1>
+  <p class="sub">Tocca un argomento per espanderlo</p>
+</header>
+
+<!-- MAP -->
+<div class="map-wrap" id="mapWrap">
+
+  <!-- SVG lines drawn by JS -->
+  <svg class="map-svg" id="mapSvg"></svg>
+
+  <div class="map-grid" id="mapGrid">
+
+    <!-- TOP LEFT: DOVE -->
+    <div class="branch b-dove col-left row-top" id="b0" onclick="openBranch(0)">
+      <span class="branch-icon">🗺️</span>
+      <div class="branch-title">Dove vivevano?</div>
+      <div class="branch-preview">Europa · Medio Oriente<br>Clima freddo</div>
+    </div>
+
+    <!-- TOP RIGHT: ASPETTO -->
+    <div class="branch b-aspetto col-right row-top" id="b1" onclick="openBranch(1)">
+      <span class="branch-icon">👁️</span>
+      <div class="branch-title">Come erano fatti?</div>
+      <div class="branch-preview">Ossa robuste · Naso grande<br>Pelle chiara</div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="center-node" id="centerNode">
+      <div class="center-icon">🦴</div>
+      <div class="center-label">I<br>Neanderthal</div>
+    </div>
+
+    <!-- MID LEFT: CIBO -->
+    <div class="branch b-cibo col-left row-mid" id="b2" onclick="openBranch(2)">
+      <span class="branch-icon">🍖</span>
+      <div class="branch-title">Cosa mangiavano?</div>
+      <div class="branch-preview">Onnivori · Caccia<br>Raccolta · Medicina</div>
+    </div>
+
+    <!-- MID RIGHT: ABILITÀ -->
+    <div class="branch b-abilita col-right row-mid" id="b3" onclick="openBranch(3)">
+      <span class="branch-icon">🧠</span>
+      <div class="branch-title">Le loro abilità</div>
+      <div class="branch-preview">Strumenti · Fuoco<br>Linguaggio · Riti</div>
+    </div>
+
+    <!-- BOT LEFT: PERIODO -->
+    <div class="branch b-periodo col-left row-bot" id="b4" onclick="openBranch(4)">
+      <span class="branch-icon">🗿</span>
+      <div class="branch-title">Quando vissero?</div>
+      <div class="branch-preview">300.000 – 40.000<br>anni fa · Paleolitico</div>
+    </div>
+
+    <!-- BOT RIGHT: FINE -->
+    <div class="branch b-fine col-right row-bot" id="b5" onclick="openBranch(5)">
+      <span class="branch-icon">❓</span>
+      <div class="branch-title">Cosa è successo?</div>
+      <div class="branch-preview">Fusione con Homo sapiens<br>Europei hanno i loro geni</div>
+    </div>
+
+  </div>
+</div>
+
+<p class="hint">▲ clicca su un riquadro per scoprire di più ▲</p>
+
+<!-- DETAIL PANEL -->
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-header">
+    <span class="detail-icon-big" id="dIcon"></span>
+    <span class="detail-title" id="dTitle"></span>
+  </div>
+  <div class="detail-color-bar" id="dBar"></div>
+  <div class="detail-items" id="dItems"></div>
+  <button class="close-detail" onclick="closeDetail()">✕ Chiudi</button>
+</div>
+
+<script>
+const branches = [
+  {
+    icon: "🗺️",
+    title: "Dove vivevano?",
+    color: "#5C8A30",
+    items: [
+      { icon:"🌍", title:"Europa e Medio Oriente", text:"Erano l'unica specie di ominini a non provenire dall'Africa: si svilupparono direttamente in Europa." },
+      { icon:"❄️", title:"Clima freddo", text:"Vivevano anche nelle zone più fredde grazie alle loro caratteristiche fisiche robuste e alla pelle chiara." },
+      { icon:"🏔️", title:"Nomadi", text:"Si spostavano continuamente in piccoli gruppi da un posto all'altro in cerca di cibo e riparo." },
+      { icon:"🔥", title:"Ambienti diversi", text:"Riuscivano ad adattarsi sia alla savana calda che ai climi glaciali grazie all'uso del fuoco e alle pelli." },
+    ]
+  },
+  {
+    icon: "👁️",
+    title: "Come erano fatti?",
+    color: "#4A90BE",
+    items: [
+      { icon:"🦴", title:"Ossa corte e robuste", text:"Le loro ossa erano più robuste e corte delle nostre, caratteristica che li proteggeva dal freddo." },
+      { icon:"👃", title:"Naso grande", text:"Avevano un naso molto grande: serviva a riscaldare l'aria fredda prima che entrasse nei polmoni." },
+      { icon:"👁️", title:"Arcata sopraccigliare prominente", text:"L'osso sopra gli occhi era molto sporgente — così tanto che quando furono trovati si pensava fossero soldati deformi!" },
+      { icon:"🧡", title:"Pelle chiara e capelli rossi", text:"Molti Neanderthal avevano la pelle chiara e alcuni avevano addirittura i capelli rossi." },
+      { icon:"🧍", title:"Posizione eretta", text:"Camminavano in posizione eretta proprio come noi, con un grande cervello e un naso molto più grande del nostro." },
+    ]
+  },
+  {
+    icon: "🍖",
+    title: "Cosa mangiavano?",
+    color: "#8B5E3A",
+    items: [
+      { icon:"🥩", title:"Onnivori", text:"Mangiavano di tutto: carne, frutta, tuberi e vegetali. 'Onnivoro' significa che non escludevano nessun tipo di cibo." },
+      { icon:"🏹", title:"Caccia", text:"Da soli cacciavano animali piccoli. In gruppo si organizzavano per inseguire e catturare animali molto più grandi." },
+      { icon:"🌿", title:"Raccolta", text:"Raccoglievano erbe, radici, bacche, miele e termiti. Era meno pericoloso della caccia ma ugualmente importante." },
+      { icon:"💊", title:"Medicina naturale", text:"Raccoglievano anche piante speciali per curare i malati: erano tra i primi 'medici' della storia!" },
+    ]
+  },
+  {
+    icon: "🧠",
+    title: "Le loro abilità",
+    color: "#9B59B6",
+    items: [
+      { icon:"🔥", title:"Uso del fuoco", text:"Usavano il fuoco per cucinare, scaldarsi e tenere lontani gli animali feroci. Una scoperta fondamentale!" },
+      { icon:"🪨", title:"Strumenti di pietra", text:"Costruivano strumenti di pietra scheggiata. I fossili di ossa bruciate vicini a resti di Erectus ce lo dimostrano." },
+      { icon:"💬", title:"Linguaggio complesso", text:"Si ritiene che usassero una forma di linguaggio complessa per comunicare e coordinarsi durante la caccia." },
+      { icon:"⚰️", title:"Riti funebri", text:"Furono probabilmente i PRIMI a seppellire i morti e a celebrare cerimonie funebri: una grande conquista dell'umanità." },
+      { icon:"🎨", title:"Arte", text:"Oltre ai riti funebri, donne e uomini neandertaliani furono probabilmente tra i primi a realizzare opere d'arte." },
+    ]
+  },
+  {
+    icon: "🗿",
+    title: "Quando vissero?",
+    color: "#2E86AB",
+    items: [
+      { icon:"📅", title:"300.000 – 40.000 anni fa", text:"Vissero per un periodo lunghissimo: circa 260.000 anni! Per confronto, tutta la storia scritta è di soli 5.000 anni." },
+      { icon:"🪨", title:"Paleolitico Medio", text:"'Paleo' = antico, 'lithos' = pietra. Il Paleolitico Medio è il periodo in cui vissero i Neanderthal." },
+      { icon:"🧊", title:"Ultima era glaciale", text:"L'ultima era glaciale fu tra i periodi più difficili: il clima era molto freddo e i ghiacci coprivano grandi zone d'Europa." },
+      { icon:"🔍", title:"Come lo sappiamo?", text:"Lo sappiamo dai fossili! In Germania, nella vallata di Neander, furono trovate le prime ossa. Da qui il nome Neanderthal." },
+    ]
+  },
+  {
+    icon: "❓",
+    title: "Cosa è successo?",
+    color: "#C0392B",
+    items: [
+      { icon:"🤝", title:"Fusione con Homo sapiens", text:"I Neanderthal non si sono estinti del tutto: si sono 'fusi' con l'Homo sapiens. Gli europei e gli asiatici hanno ereditato una piccola parte dei loro geni!" },
+      { icon:"🧬", title:"I loro geni sono in noi", text:"Studi recenti dimostrano che gli attuali europei e asiatici hanno ereditato dai Neanderthal una piccola parte delle loro caratteristiche fisiche." },
+      { icon:"🌡️", title:"Cambiamenti climatici", text:"Uno dei motivi per cui i Neanderthal scomparvero fu il cambiamento del clima, che rese il loro ambiente più difficile." },
+      { icon:"❓", title:"Ancora un mistero", text:"Non sappiamo ancora con certezza perché i Neanderthal siano scomparsi: gli studiosi continuano a cercare risposte!" },
+    ]
+  }
+];
+
+let currentOpen = null;
+
+function openBranch(idx) {
+  // toggle
+  if (currentOpen === idx) { closeDetail(); return; }
+  currentOpen = idx;
+
+  document.querySelectorAll('.branch').forEach((b,i) => b.classList.toggle('open', i === idx));
+
+  const b = branches[idx];
+  document.getElementById('dIcon').textContent = b.icon;
+  document.getElementById('dTitle').textContent = b.title;
+  document.getElementById('dBar').style.background = b.color;
+
+  const itemsEl = document.getElementById('dItems');
+  itemsEl.innerHTML = b.items.map(it => `
+    <div class="detail-item" style="border-left-color:${b.color}80">
+      <span class="di-icon">${it.icon}</span>
+      <div class="di-text"><strong>${it.title}</strong>${it.text}</div>
+    </div>`).join('');
+
+  const panel = document.getElementById('detailPanel');
+  panel.className = 'detail-panel visible';
+  panel.style.borderColor = b.color + '50';
+  setTimeout(() => panel.scrollIntoView({ behavior:'smooth', block:'nearest' }), 100);
+}
+
+function closeDetail() {
+  currentOpen = null;
+  document.querySelectorAll('.branch').forEach(b => b.classList.remove('open'));
+  document.getElementById('detailPanel').className = 'detail-panel';
+}
+
+// Draw SVG connector lines from center to each branch
+function drawLines() {
+  const svg = document.getElementById('mapSvg');
+  const wrap = document.getElementById('mapWrap');
+  const center = document.getElementById('centerNode');
+  const wRect = wrap.getBoundingClientRect();
+  const cRect = center.getBoundingClientRect();
+  const cx = cRect.left - wRect.left + cRect.width / 2;
+  const cy = cRect.top  - wRect.top  + cRect.height / 2;
+
+  const colors = branches.map(b => b.color);
+  svg.innerHTML = '';
+  svg.setAttribute('viewBox', `0 0 ${wRect.width} ${wRect.height}`);
+
+  [0,1,2,3,4,5].forEach(i => {
+    const bEl = document.getElementById('b'+i);
+    const bRect = bEl.getBoundingClientRect();
+    const bx = bRect.left - wRect.left + bRect.width / 2;
+    const by = bRect.top  - wRect.top  + bRect.height / 2;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    const mx = (cx + bx) / 2;
+    path.setAttribute('d', `M${cx},${cy} Q${mx},${cy} ${bx},${by}`);
+    path.setAttribute('class','connector');
+    path.setAttribute('stroke', colors[i]);
+    svg.appendChild(path);
+  });
+}
+
+window.addEventListener('load', () => { setTimeout(drawLines, 80); });
+window.addEventListener('resize', drawLines);
+</script>
+</body>
+</html>

@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giochi – I Neanderthal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FDF6E8;
+  --deep: #3D2B1A;
+  --earth: #7B5E3A;
+  --sand: #C4A882;
+  --fire: #E8640C;
+  --ember: #F5A623;
+  --leaf: #5C8A30;
+  --sky: #4A90BE;
+  --cream: #FFFDF5;
+  --red: #C0392B;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--deep);
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  height: 64px;
+}
+.game-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.25rem;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  border-bottom: 4px solid transparent;
+  transition: all 0.2s;
+  user-select: none;
+}
+.game-tab:hover { color: var(--ember); }
+.game-tab.active { color: var(--ember); border-bottom-color: var(--ember); background: rgba(255,255,255,0.05); }
+.tab-icon { font-size: 1.5rem; }
+
+/* ── HEADER ── */
+.game-header {
+  text-align: center;
+  padding: 28px 20px 18px;
+}
+.game-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  color: var(--deep);
+  margin-bottom: 6px;
+}
+.game-title span { color: var(--fire); }
+.game-desc {
+  color: var(--earth);
+  font-size: 1rem;
+  font-weight: 700;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ── PANELS ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ════════════════════════════════
+   GIOCO 1 – ABBINA
+════════════════════════════════ */
+#panel-abbina {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+.abbina-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.abbina-col-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.1rem;
+  color: var(--earth);
+  text-align: center;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+.abbina-words, .abbina-defs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* PAROLA */
+.abbina-word {
+  background: var(--cream);
+  border: 3px solid var(--sand);
+  border-radius: 16px;
+  padding: 14px 20px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.15rem;
+  color: var(--deep);
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 3px 4px 0 rgba(196,168,130,0.4);
+  transition: all 0.2s cubic-bezier(.34,1.56,.64,1);
+  user-select: none;
+  touch-action: none;
+}
+.abbina-word:hover { border-color: var(--fire); transform: translateX(4px) scale(1.02); box-shadow: 4px 6px 0 rgba(232,100,12,0.25); }
+.abbina-word.selected { border-color: var(--fire); background: #FFF0E0; box-shadow: 0 0 0 3px rgba(232,100,12,0.3); transform: scale(1.03); }
+.abbina-word.matched { background: #EAF4E0; border-color: var(--leaf); color: var(--leaf); cursor: default; opacity: 0.75; }
+.abbina-word.dragging { opacity: 0.4; cursor: grabbing; }
+.word-em { font-size: 1.4rem; }
+
+/* DEFINIZIONE DROP */
+.abbina-def {
+  border: 3px dashed var(--sand);
+  border-radius: 16px;
+  padding: 14px 18px;
+  min-height: 64px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--earth);
+  transition: all 0.2s;
+  background: rgba(255,255,255,0.4);
+  cursor: pointer;
+  line-height: 1.5;
+}
+.abbina-def .def-inner { color: var(--earth); }
+.abbina-def .placed { font-family: 'Fredoka One', cursive; font-size: 1rem; color: var(--deep); margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
+.abbina-def.over { border-color: var(--sky); background: #EAF4FA; border-style: solid; }
+.abbina-def.correct { border-style: solid; border-color: var(--leaf); background: #EAF4E0; }
+.abbina-def.wrong { border-style: solid; border-color: var(--red); background: #FDE8E6; }
+
+/* ABBINA CONTROLS */
+.abbina-controls {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.btn-check {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.1rem;
+  padding: 13px 38px;
+  border: none;
+  border-radius: 50px;
+  background: var(--leaf);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(92,138,48,0.4);
+  transition: all 0.2s;
+}
+.btn-check:hover { transform: translateY(-3px); box-shadow: 0 7px 16px rgba(92,138,48,0.45); }
+.btn-reset {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.1rem;
+  padding: 13px 28px;
+  border: 3px solid var(--sand);
+  border-radius: 50px;
+  background: var(--cream);
+  color: var(--earth);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-reset:hover { border-color: var(--fire); color: var(--fire); transform: translateY(-2px); }
+
+.abbina-result {
+  text-align: center;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.4rem;
+  color: var(--deep);
+  margin-top: 18px;
+  min-height: 40px;
+}
+
+/* ════════════════════════════════
+   GIOCO 2 – MEMORY
+════════════════════════════════ */
+#panel-memory {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+.memory-info {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.mem-stat {
+  background: var(--cream);
+  border: 3px solid var(--sand);
+  border-radius: 14px;
+  padding: 10px 24px;
+  text-align: center;
+  box-shadow: 3px 3px 0 rgba(196,168,130,0.3);
+}
+.mem-stat-num {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2rem;
+  color: var(--fire);
+  line-height: 1;
+}
+.mem-stat-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--earth);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.memory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.mem-card {
+  aspect-ratio: 3/2;
+  perspective: 800px;
+  cursor: pointer;
+}
+.mem-card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(.4,2,.6,1);
+  border-radius: 16px;
+}
+.mem-card.flipped .mem-card-inner { transform: rotateY(180deg); }
+.mem-card.matched .mem-card-inner { transform: rotateY(180deg); }
+.mem-card.matched .mem-front { background: linear-gradient(135deg, #5C8A30, #7AB940) !important; border-color: var(--leaf) !important; }
+.mem-card.matched .mem-front * { color: white !important; }
+.mem-card.wrong-flash .mem-card-inner { animation: wrongShake 0.4s; }
+
+@keyframes wrongShake {
+  0%,100% { transform: rotateY(180deg) translateX(0); }
+  25% { transform: rotateY(180deg) translateX(-6px); }
+  75% { transform: rotateY(180deg) translateX(6px); }
+}
+
+.mem-back, .mem-front {
+  position: absolute;
+  width: 100%; height: 100%;
+  border-radius: 16px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+.mem-back {
+  background: linear-gradient(135deg, var(--deep), var(--earth));
+  border: 3px solid var(--sand);
+  flex-direction: column;
+  gap: 4px;
+}
+.mem-back-pattern {
+  font-size: 2.2rem;
+  opacity: 0.6;
+}
+.mem-back-label {
+  font-family: 'Fredoka One', cursive;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.mem-front {
+  transform: rotateY(180deg);
+  border: 3px solid var(--sand);
+  flex-direction: column;
+  text-align: center;
+  gap: 4px;
+}
+.mem-front.type-word {
+  background: linear-gradient(135deg, var(--fire), var(--ember));
+  border-color: var(--fire);
+}
+.mem-front.type-def {
+  background: var(--cream);
+  border-color: var(--sand);
+}
+.mem-word-icon { font-size: 1.6rem; }
+.mem-word-text {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1rem;
+  color: white;
+  line-height: 1.2;
+}
+.mem-def-text {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--deep);
+  line-height: 1.4;
+}
+
+.memory-controls {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+/* ── WIN OVERLAY ── */
+.win-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(61,43,26,0.85);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  text-align: center;
+  padding: 30px;
+}
+.win-overlay.show { display: flex; }
+.win-box {
+  background: var(--cream);
+  border: 4px solid var(--ember);
+  border-radius: 28px;
+  padding: 48px 56px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  max-width: 480px;
+}
+.win-emoji { font-size: 4rem; margin-bottom: 10px; }
+.win-title { font-family: 'Fredoka One', cursive; font-size: 2.2rem; color: var(--fire); margin-bottom: 8px; }
+.win-sub { font-size: 1.1rem; font-weight: 700; color: var(--earth); margin-bottom: 24px; }
+.win-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.2rem;
+  padding: 14px 40px;
+  border: none;
+  border-radius: 50px;
+  background: var(--fire);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(232,100,12,0.4);
+  transition: all 0.2s;
+}
+.win-btn:hover { transform: scale(1.05); }
+
+@media (max-width: 700px) {
+  .abbina-grid { grid-template-columns: 1fr; }
+  .memory-grid { grid-template-columns: repeat(3, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR TABS -->
+<div class="topbar">
+  <div class="game-tab active" onclick="switchTab('abbina', this)">
+    <span class="tab-icon">🔗</span> Abbina la parola
+  </div>
+  <div class="game-tab" onclick="switchTab('memory', this)">
+    <span class="tab-icon">🃏</span> Memory
+  </div>
+</div>
+
+<!-- ══════════ GIOCO 1: ABBINA ══════════ -->
+<div class="panel active" id="panel-abbina">
+  <div class="game-header">
+    <div class="game-title">🔗 <span>Abbina</span> la parola!</div>
+    <div class="game-desc">Trascina ogni parola sulla sua definizione — oppure toccala e poi tocca dove vuoi metterla!</div>
+  </div>
+
+  <div class="abbina-grid">
+    <div>
+      <div class="abbina-col-title">🔤 PAROLE</div>
+      <div class="abbina-words" id="abbinaWords"></div>
+    </div>
+    <div>
+      <div class="abbina-col-title">📖 DEFINIZIONI</div>
+      <div class="abbina-defs" id="abbinaDefs"></div>
+    </div>
+  </div>
+
+  <div class="abbina-controls">
+    <button class="btn-check" onclick="checkAbbina()">✅ Controlla!</button>
+    <button class="btn-reset" onclick="resetAbbina()">🔄 Ricomincia</button>
+  </div>
+  <div class="abbina-result" id="abbinaResult"></div>
+</div>
+
+<!-- ══════════ GIOCO 2: MEMORY ══════════ -->
+<div class="panel" id="panel-memory">
+  <div class="game-header">
+    <div class="game-title">🃏 <span>Memory</span> dei Neanderthal!</div>
+    <div class="game-desc">Gira le carte e trova le coppie parola + definizione. Quante mosse ti servono?</div>
+  </div>
+
+  <div class="memory-info">
+    <div class="mem-stat">
+      <div class="mem-stat-num" id="memMoves">0</div>
+      <div class="mem-stat-label">Mosse</div>
+    </div>
+    <div class="mem-stat">
+      <div class="mem-stat-num" id="memPairs">0 / 8</div>
+      <div class="mem-stat-label">Coppie trovate</div>
+    </div>
+  </div>
+
+  <div class="memory-grid" id="memoryGrid"></div>
+
+  <div class="memory-controls">
+    <button class="btn-reset" onclick="resetMemory()">🔄 Nuova partita</button>
+  </div>
+</div>
+
+<!-- WIN OVERLAY -->
+<div class="win-overlay" id="winOverlay">
+  <div class="win-box">
+    <div class="win-emoji">🎉</div>
+    <div class="win-title">Bravissimo!</div>
+    <div class="win-sub" id="winMsg"></div>
+    <button class="win-btn" onclick="closeWin()">🔄 Gioca ancora!</button>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+const pairs = [
+  { word:"Neanderthal", icon:"🦴", def:"Ominini che vissero in Europa tra 300.000 e 40.000 anni fa, non originari dell'Africa" },
+  { word:"Fossile", icon:"🪨", def:"Resto pietrificato di un essere vivente antico ritrovato nella roccia" },
+  { word:"Onnivoro", icon:"🍖", def:"Chi mangia ogni tipo di cibo: carne, frutta, tuberi e vegetali" },
+  { word:"Caccia", icon:"🏹", def:"Attività di catturare animali; in gruppo si cacciavano animali grandi" },
+  { word:"Rito funebre", icon:"⚰️", def:"Cerimonia che si celebra in occasione della morte; i Neanderthal furono i primi a seppellire i morti" },
+  { word:"Paleolitico Medio", icon:"🗿", def:"Periodo preistorico tra 300.000 e 40.000 anni fa in cui vissero i Neanderthal" },
+  { word:"Arcata sopraccigliare", icon:"👁️", def:"Osso sporgente sopra gli occhi, molto pronunciato nei Neanderthal" },
+  { word:"Linguaggio", icon:"💬", def:"Forma di comunicazione complessa usata dai Neanderthal per parlare tra loro" },
+];
+
+// ════════════ ABBINA ════════════
+let abbinaSelected = null;
+let abbinaAnswers = {};
+let abbinaChecked = false;
+
+const shuffledWords = [...pairs].sort(() => Math.random() - 0.5);
+const shuffledDefs  = [...pairs].sort(() => Math.random() - 0.5);
+
+function buildAbbina() {
+  abbinaSelected = null; abbinaAnswers = {}; abbinaChecked = false;
+  document.getElementById('abbinaResult').textContent = '';
+
+  const wContainer = document.getElementById('abbinaWords');
+  const dContainer = document.getElementById('abbinaDefs');
+  wContainer.innerHTML = '';
+  dContainer.innerHTML = '';
+
+  shuffledWords.forEach((p, wi) => {
+    const el = document.createElement('div');
+    el.className = 'abbina-word';
+    el.id = 'aw-' + wi;
+    el.dataset.word = p.word;
+    el.innerHTML = `<span class="word-em">${p.icon}</span>${p.word}`;
+    el.draggable = true;
+
+    el.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', p.word);
+      el.classList.add('dragging');
+    });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+
+    el.addEventListener('click', () => {
+      if (abbinaChecked || el.classList.contains('matched')) return;
+      if (abbinaSelected === p.word) {
+        abbinaSelected = null;
+        document.querySelectorAll('.abbina-word').forEach(e => e.classList.remove('selected'));
+        return;
+      }
+      document.querySelectorAll('.abbina-word').forEach(e => e.classList.remove('selected'));
+      abbinaSelected = p.word;
+      el.classList.add('selected');
+    });
+    wContainer.appendChild(el);
+  });
+
+  shuffledDefs.forEach((p, di) => {
+    const el = document.createElement('div');
+    el.className = 'abbina-def';
+    el.id = 'ad-' + di;
+    el.dataset.answer = p.word;
+    el.innerHTML = `<div class="def-inner">${p.def}</div>`;
+
+    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault(); el.classList.remove('over');
+      if (abbinaChecked) return;
+      placeAbbina(e.dataTransfer.getData('text/plain'), el, di, p);
+    });
+    el.addEventListener('click', () => {
+      if (!abbinaSelected || abbinaChecked) return;
+      const selWord = abbinaSelected;
+      const selPair = pairs.find(x => x.word === selWord);
+      placeAbbina(selWord, el, di, p);
+      abbinaSelected = null;
+      document.querySelectorAll('.abbina-word').forEach(e => e.classList.remove('selected'));
+    });
+    dContainer.appendChild(el);
+  });
+}
+
+function placeAbbina(word, dropEl, di, defPair) {
+  // Remove from previous slot
+  Object.entries(abbinaAnswers).forEach(([k, v]) => {
+    if (v === word) {
+      delete abbinaAnswers[k];
+      const old = document.getElementById('ad-' + k);
+      if (old) old.innerHTML = `<div class="def-inner">${shuffledDefs[k].def}</div>`;
+      old && old.classList.remove('correct','wrong');
+    }
+  });
+  // Remove previous word from this slot
+  if (abbinaAnswers[di]) {
+    const prev = abbinaAnswers[di];
+    document.querySelectorAll('.abbina-word').forEach(w => { if (w.dataset.word === prev) w.classList.remove('matched'); });
+  }
+  abbinaAnswers[di] = word;
+  const wordPair = pairs.find(x => x.word === word);
+  dropEl.innerHTML = `<div class="placed"><span>${wordPair.icon}</span>${word}</div><div class="def-inner">${defPair.def}</div>`;
+  dropEl.classList.remove('correct','wrong');
+}
+
+function checkAbbina() {
+  if (abbinaChecked) return;
+  let correct = 0;
+  shuffledDefs.forEach((p, di) => {
+    const dropEl = document.getElementById('ad-' + di);
+    const given = abbinaAnswers[di];
+    if (given === p.word) { dropEl.classList.add('correct'); correct++; }
+    else if (given) { dropEl.classList.add('wrong'); }
+  });
+  abbinaChecked = true;
+  const res = document.getElementById('abbinaResult');
+  if (correct === pairs.length) {
+    res.textContent = `🎉 Perfetto! Tutti e ${pairs.length} abbinamenti corretti!`;
+    showWin(`Hai abbinato tutte le ${pairs.length} coppie correttamente!`);
+  } else {
+    res.textContent = `✏️ ${correct} su ${pairs.length} corretti. Guarda quelli in rosso!`;
+  }
+}
+
+function resetAbbina() {
+  buildAbbina();
+}
+
+buildAbbina();
+
+// ════════════ MEMORY ════════════
+let memFlipped = [];
+let memMatched = [];
+let memMoves = 0;
+let memLocked = false;
+let memCards = [];
+
+function buildMemory() {
+  memFlipped = []; memMatched = []; memMoves = 0; memLocked = false;
+  document.getElementById('memMoves').textContent = '0';
+  document.getElementById('memPairs').textContent = `0 / ${pairs.length}`;
+
+  // Build card pairs
+  const cards = [];
+  pairs.forEach(p => {
+    cards.push({ id: p.word, type: 'word', icon: p.icon, text: p.word });
+    cards.push({ id: p.word, type: 'def',  icon: p.icon, text: p.def  });
+  });
+  // Shuffle
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  memCards = cards;
+
+  const grid = document.getElementById('memoryGrid');
+  grid.innerHTML = '';
+  cards.forEach((c, idx) => {
+    const card = document.createElement('div');
+    card.className = 'mem-card';
+    card.dataset.idx = idx;
+    card.innerHTML = `
+      <div class="mem-card-inner">
+        <div class="mem-back">
+          <div class="mem-back-pattern">🪨</div>
+          <div class="mem-back-label">Neanderthal</div>
+        </div>
+        <div class="mem-front ${c.type === 'word' ? 'type-word' : 'type-def'}">
+          ${c.type === 'word'
+            ? `<div class="mem-word-icon">${c.icon}</div><div class="mem-word-text">${c.text}</div>`
+            : `<div class="mem-def-text">${c.text}</div>`
+          }
+        </div>
+      </div>`;
+    card.addEventListener('click', () => flipCard(idx));
+    grid.appendChild(card);
+  });
+}
+
+function flipCard(idx) {
+  if (memLocked) return;
+  if (memMatched.includes(idx)) return;
+  if (memFlipped.includes(idx)) return;
+  if (memFlipped.length === 2) return;
+
+  const card = document.querySelector(`.mem-card[data-idx="${idx}"]`);
+  card.classList.add('flipped');
+  memFlipped.push(idx);
+
+  if (memFlipped.length === 2) {
+    memMoves++;
+    document.getElementById('memMoves').textContent = memMoves;
+    memLocked = true;
+    setTimeout(checkMemoryMatch, 900);
+  }
+}
+
+function checkMemoryMatch() {
+  const [a, b] = memFlipped;
+  const ca = memCards[a], cb = memCards[b];
+
+  if (ca.id === cb.id && ca.type !== cb.type) {
+    // Match!
+    memMatched.push(a, b);
+    document.querySelector(`.mem-card[data-idx="${a}"]`).classList.add('matched');
+    document.querySelector(`.mem-card[data-idx="${b}"]`).classList.add('matched');
+    const found = memMatched.length / 2;
+    document.getElementById('memPairs').textContent = `${found} / ${pairs.length}`;
+    memFlipped = [];
+    memLocked = false;
+    if (memMatched.length === pairs.length * 2) {
+      setTimeout(() => showWin(`Hai trovato tutte le coppie in ${memMoves} mosse! ${memMoves <= 12 ? '🏆 Straordinario!' : memMoves <= 18 ? '⭐ Ottimo!' : '😊 Bravo!'}`), 400);
+    }
+  } else {
+    // No match
+    const cardA = document.querySelector(`.mem-card[data-idx="${a}"]`);
+    const cardB = document.querySelector(`.mem-card[data-idx="${b}"]`);
+    cardA.classList.add('wrong-flash');
+    cardB.classList.add('wrong-flash');
+    setTimeout(() => {
+      cardA.classList.remove('flipped','wrong-flash');
+      cardB.classList.remove('flipped','wrong-flash');
+      memFlipped = [];
+      memLocked = false;
+    }, 900);
+  }
+}
+
+function resetMemory() { buildMemory(); }
+
+buildMemory();
+
+// ════════════ TABS ════════════
+function switchTab(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.game-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ════════════ WIN ════════════
+function showWin(msg) {
+  document.getElementById('winMsg').textContent = msg;
+  document.getElementById('winOverlay').classList.add('show');
+}
+function closeWin() {
+  document.getElementById('winOverlay').classList.remove('show');
+}
+</script>
+</body>
+</html>
